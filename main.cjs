@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const { autoUpdater } = require('electron-updater');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -27,6 +28,37 @@ function createWindow() {
 }
 
 app.whenReady().then(createWindow);
+
+// Auto-update: sólo en producción
+app.whenReady().then(() => {
+  if (process.env.NODE_ENV !== 'development') {
+    // Configuración básica: comprobar actualizaciones y notificar
+    autoUpdater.checkForUpdatesAndNotify().catch(err => {
+      console.error('autoUpdater check failed', err);
+    });
+
+    autoUpdater.on('update-available', () => {
+      console.log('Update available');
+    });
+
+    autoUpdater.on('update-downloaded', (info) => {
+      // Notificar al usuario y ofrecer reiniciar
+      const focused = BrowserWindow.getFocusedWindow();
+      const choice = dialog.showMessageBoxSync(focused, {
+        type: 'question',
+        buttons: ['Reiniciar ahora', 'Después'],
+        defaultId: 0,
+        cancelId: 1,
+        title: 'Actualización disponible',
+        message: `Se ha descargado una nueva versión. ¿Deseas reiniciar para aplicar la actualización?`,
+      });
+
+      if (choice === 0) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  }
+});
 
 // IPC handlers para persistencia de pestañas
 ipcMain.handle('read-tabs', async () => {
