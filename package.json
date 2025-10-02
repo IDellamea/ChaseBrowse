@@ -41,8 +41,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "REPLACE_OWNER",
-        "repo": "REPLACE_REPO"
+        "owner": "IDellamea",
+        "repo": "Navegador"
       }
     ],
     "files": [
