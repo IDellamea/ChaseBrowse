@@ -1,0 +1,87 @@
+.column-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  padding: 5px 8px;
+  background-color: #f0f2f5;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.header-btn, .close-btn {
+  border: none;
+  background: #ccc;
+  color: #333;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: bold;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.header-btn:hover, .close-btn:hover {
+  background: #007bff;
+  color: white;
+}
+
+.close-btn:hover {
+  background: #ff5c5c;
+}
+
+.tab-label, .tab-url-display {
+  flex-grow: 1;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.tab-label {
+  cursor: pointer;
+}
+
+.tab-label.editable {
+  background: #eaf6ff;
+  outline: 2px solid #007bff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  min-width: 60px;
+}
+
+.color-palette-float {
+  position: absolute;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  padding: 8px;
+  border-radius: 8px;
+  z-index: 99999 !important;
+}
+
+.tab-url-display {
+  color: #888; /* Un color ligeramente diferente para la URL */
+}
+
+.column-webview-container {
+  flex-grow: 1;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.column-webview-container webview {
+  width: 100%;
+  height: 100%;
+  border: none;
+}

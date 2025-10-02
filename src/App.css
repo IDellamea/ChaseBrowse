@@ -1,0 +1,76 @@
+/* Reseteo básico y estilos generales */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background-color: #f0f2f5;
+}
+
+.app-container {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Contenedor de la barra de URL, ahora fijado a la parte superior */
+.controls-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+
+  padding: 10px;
+  background-color: #fff;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.controls-container input {
+  flex-grow: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.controls-container button {
+  padding: 8px 15px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.controls-container button:hover {
+  background-color: #0056b3;
+}
+
+/* Contenedor de las columnas con scroll horizontal */
+.column-container {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background-color: #e9ebee;
+  gap: 10px;
+
+  /* Ajuste para la barra superior fija */
+  padding: 10px;
+  padding-top: 60px; /* Espacio para no quedar oculto por .controls-container */
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Estilo de cada columna individual */
+.column {
+  height: 100%;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 10px;
+  box-sizing: border-box;
+}
