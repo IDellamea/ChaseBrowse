@@ -1,8 +1,9 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const log = require('electron-log');
 let autoUpdater;
+let manualCheckInProgress = false;
 try {
   // Intentar cargar solo si está instalado en el entorno (CI o local)
   autoUpdater = require('electron-updater').autoUpdater;
@@ -12,6 +13,52 @@ try {
 } catch (e) {
   console.log('electron-updater no está instalado, update automático deshabilitado.');
   autoUpdater = null;
+}
+
+function createApplicationMenu() {
+  const template = [
+    ...(process.platform === 'darwin' ? [{ role: 'appMenu' }] : []),
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Buscar actualizaciones…',
+          click: () => {
+            if (process.env.NODE_ENV === 'development') {
+              dialog.showMessageBox({
+                type: 'info',
+                title: 'Actualizar',
+                message: 'Las comprobaciones de actualización están deshabilitadas en modo desarrollo.',
+              });
+              return;
+            }
+            if (!autoUpdater) {
+              dialog.showMessageBox({
+                type: 'warning',
+                title: 'Actualizar',
+                message: 'El módulo de auto-actualización no está disponible.',
+              });
+              return;
+            }
+            manualCheckInProgress = true;
+            autoUpdater.checkForUpdates().catch((err) => {
+              manualCheckInProgress = false;
+              log.error('Manual update check failed', err);
+              dialog.showMessageBox({
+                type: 'error',
+                title: 'Actualizar',
+                message: 'No se pudo comprobar si hay actualizaciones.',
+                detail: err?.message ?? String(err),
+              });
+            });
+          },
+        },
+      ],
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
 
 function createWindow() {
@@ -38,7 +85,10 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  createApplicationMenu();
+});
 
 // Auto-update: sólo en producción y si electron-updater está disponible
 app.whenReady().then(() => {
@@ -55,10 +105,25 @@ app.whenReady().then(() => {
 
       autoUpdater.on('update-available', (info) => {
         log.info('autoUpdater: update available', info.version);
+        if (manualCheckInProgress) {
+          dialog.showMessageBox({
+            type: 'info',
+            title: 'Actualizar',
+            message: `Se encontró una actualización (${info.version}). Se descargará en segundo plano.`,
+          });
+        }
       });
 
       autoUpdater.on('update-not-available', () => {
         log.info('autoUpdater: no update available');
+        if (manualCheckInProgress) {
+          manualCheckInProgress = false;
+          dialog.showMessageBox({
+            type: 'info',
+            title: 'Actualizar',
+            message: 'No hay nuevas versiones disponibles.',
+          });
+        }
       });
 
       autoUpdater.on('download-progress', (progressInfo) => {
@@ -75,9 +140,21 @@ app.whenReady().then(() => {
 
       autoUpdater.on('error', (error) => {
         log.error('autoUpdater error:', error);
+        if (manualCheckInProgress) {
+          manualCheckInProgress = false;
+          dialog.showMessageBox({
+            type: 'error',
+            title: 'Actualizar',
+            message: 'Ocurrió un error al comprobar actualizaciones.',
+            detail: error?.message ?? String(error),
+          });
+        }
       });
 
       autoUpdater.on('update-downloaded', (info) => {
+        if (manualCheckInProgress) {
+          manualCheckInProgress = false;
+        }
         // Notificar al usuario y ofrecer reiniciar
         const focused = BrowserWindow.getFocusedWindow();
         const choice = dialog.showMessageBoxSync(focused, {
