@@ -1,11 +1,13 @@
 {
   "name": "navegador",
   "private": true,
-  "version": "0.0.5",
+  "version": "0.0.1",
+  "description": "Navegador multiplataforma basado en Electron y Vite.",
+  "author": "IDellamea",
   "type": "module",
   "main": "main.cjs",
   "scripts": {
-    "dev": "concurrently \"npm:start:vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "dev": "concurrently \"npm run start:vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "start:vite": "vite",
     "build": "vite build",
     "lint": "eslint .",
@@ -13,6 +15,7 @@
     "dist": "npm run build && electron-builder"
   },
   "dependencies": {
+    "electron-log": "^5.4.3",
     "electron-updater": "^6.6.2",
     "re-resizable": "^6.11.2",
     "react": "^19.1.1",
@@ -53,8 +56,12 @@
     ],
     "win": {
       "target": [
-        "nsis"
-      ]
+        "nsis",
+        "dir"
+      ],
+      "forceCodeSigning": false,
+      "signAndEditExecutable": false,
+      "verifyUpdateCodeSignature": false
     }
   }
 }
