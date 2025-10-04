@@ -1,10 +1,14 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const log = require('electron-log');
 let autoUpdater;
 try {
   // Intentar cargar solo si está instalado en el entorno (CI o local)
   autoUpdater = require('electron-updater').autoUpdater;
+  autoUpdater.logger = log;
+  autoUpdater.logger.transports.file.level = 'info';
+  log.catchErrors();
 } catch (e) {
   console.log('electron-updater no está instalado, update automático deshabilitado.');
   autoUpdater = null;
@@ -45,8 +49,32 @@ app.whenReady().then(() => {
         console.error('autoUpdater check failed', err);
       });
 
-      autoUpdater.on('update-available', () => {
-        console.log('Update available');
+      autoUpdater.on('checking-for-update', () => {
+        log.info('autoUpdater: checking for update');
+      });
+
+      autoUpdater.on('update-available', (info) => {
+        log.info('autoUpdater: update available', info.version);
+      });
+
+      autoUpdater.on('update-not-available', () => {
+        log.info('autoUpdater: no update available');
+      });
+
+      autoUpdater.on('download-progress', (progressInfo) => {
+        log.info(
+          'autoUpdater: download progress',
+          JSON.stringify({
+            percent: Math.round(progressInfo.percent),
+            transferred: progressInfo.transferred,
+            total: progressInfo.total,
+            bytesPerSecond: progressInfo.bytesPerSecond,
+          })
+        );
+      });
+
+      autoUpdater.on('error', (error) => {
+        log.error('autoUpdater error:', error);
       });
 
       autoUpdater.on('update-downloaded', (info) => {

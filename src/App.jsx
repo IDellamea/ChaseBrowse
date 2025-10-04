@@ -106,7 +106,7 @@ function App() {
             enable={{ right: true }}
             minWidth={250}
           >
-            <Tab 
+            <Tab
               tab={tab} // Pasamos el objeto tab completo
               onDelete={() => handleDeleteTab(tab.id)}
               onUpdate={handleUpdateTab} // Pasamos la función de actualización
@@ -114,6 +114,9 @@ function App() {
           </Resizable>
         ))}
       </div>
+      <footer className="app-footer">
+        Creado por <strong>IDellamea</strong>
+      </footer>
     </div>
   );
 }

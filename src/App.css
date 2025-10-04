@@ -10,6 +10,8 @@ html, body, #root {
 .app-container {
   height: 100vh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Contenedor de la barra de URL, ahora fijado a la parte superior */
@@ -62,6 +64,7 @@ html, body, #root {
   padding-top: 60px; /* Espacio para no quedar oculto por .controls-container */
   height: 100%;
   box-sizing: border-box;
+  flex: 1;
 }
 
 /* Estilo de cada columna individual */
@@ -73,4 +76,12 @@ html, body, #root {
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   padding: 10px;
   box-sizing: border-box;
+}
+.app-footer {
+ padding: 10px 16px;
+ text-align: center;
+ background-color: #fff;
+ border-top: 1px solid #ccc;
+ font-size: 14px;
+ color: #555;
 }
