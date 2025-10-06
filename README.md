@@ -1,4 +1,4 @@
-# Navegador (React + Vite + Electron)
+# ChaseBrowse (React + Vite + Electron)
 
 Aplicación de escritorio construida con Electron que ofrece un conjunto de pestañas responsivas, persistiendo automáticamente la URL, el color y la etiqueta de cada pestaña. La interfaz se desarrolla con React + Vite y se incrusta en un contenedor Chromium mediante `<webview>`.
 
@@ -39,7 +39,7 @@ Herramientas opcionales:
 1. Clonar o descargar el repositorio.
    ```powershell
    git clone https://github.com/<usuario>/<repo>.git
-   cd Navegador
+   cd ChaseBrowse
    ```
 2. Instalar dependencias del proyecto.
    ```powershell
@@ -78,9 +78,9 @@ Herramientas opcionales:
 ## Persistencia local de pestañas
 
 - El estado de todas las pestañas se guarda como JSON en:
-  - Windows: `%APPDATA%\Navegador\tabs.json`
-  - macOS: `~/Library/Application Support/Navegador/tabs.json`
-  - Linux: `~/.config/Navegador/tabs.json`
+  - Windows: `%APPDATA%\ChaseBrowse\tabs.json`
+  - macOS: `~/Library/Application Support/ChaseBrowse/tabs.json`
+  - Linux: `~/.config/ChaseBrowse/tabs.json`
 - [`main.cjs`](main.cjs) expone los manejadores IPC `read-tabs` y `write-tabs`, que el front-end invoca para cargar y guardar el arreglo.
 - Cada vez que se crea, elimina, re-etiqueta o cambia de URL una pestaña, [`App.jsx`](src/App.jsx) persiste la nueva lista automáticamente.
 
@@ -105,9 +105,9 @@ Herramientas opcionales:
    npm run dist
    ```
 3. Archivos de salida en `dist/`:
-   - `win-unpacked/`: versión portable (extraer y ejecutar `Navegador.exe`).
-   - `Navegador-Setup-<versión>.exe`: instalador NSIS por defecto.
-   - `Navegador-portable.zip`: ZIP portable generado por la configuración.
+   - `win-unpacked/`: versión portable (extraer y ejecutar `ChaseBrowse.exe`).
+   - `ChaseBrowse-Setup-<versión>.exe`: instalador NSIS por defecto.
+   - `ChaseBrowse-portable.zip`: ZIP portable generado por la configuración.
    - `latest.yml`: manifiesto que usa `electron-updater` para resolver nuevas versiones.
 4. Si electron-builder necesita firmar binarios y no dispone de certificados, el proceso continuará pero los binarios quedarán sin firmar (apto para pruebas internas).
 
@@ -133,9 +133,9 @@ Herramientas opcionales:
   npm run dist
   ```
 - Verifica que `dist/` contiene:
-  - `Navegador-Setup-<versión>.exe`
+  - `ChaseBrowse-Setup-<versión>.exe`
   - `latest.yml`
-  - `Navegador-portable.zip` (opcional, pero útil para distribución rápida)
+  - `ChaseBrowse-portable.zip` (opcional, pero útil para distribución rápida)
   - Cualquier otro archivo configurado en la sección `build.artifactName` de [`package.json`](package.json)
 
 ### 3. Publicar en GitHub Releases
@@ -149,7 +149,7 @@ Herramientas opcionales:
 3. Si prefieres subir manualmente:
    - Crear un release asociado al tag `vX.Y.Z`.
    - Adjuntar los archivos:
-     - `Navegador-Setup-<versión>.exe`
+     - `ChaseBrowse-Setup-<versión>.exe`
      - `latest.yml`
      - (Opcional) `Navegador-portable.zip`
 4. Publicar el release. Los clientes que tengan instalada la app se conectarán al feed GitHub y descargarán la actualización cuando detecten un `latest.yml` con versión superior.
@@ -170,7 +170,7 @@ Herramientas opcionales:
 ## Depuración y soporte
 
 - En desarrollo DevTools se abre automáticamente. Para producción puedes habilitar temporalmente `win.webContents.openDevTools()` en [`main.cjs`](main.cjs).
-- Los logs de auto-actualización se escriben mediante `electron-log` en el directorio de usuario (`%APPDATA%\Navegador\logs`).
+- Los logs de auto-actualización se escriben mediante `electron-log` en el directorio de usuario (`%APPDATA%\ChaseBrowse\logs`).
 - Si encuentras fallos o necesitas nuevas funcionalidades, abre un issue en el repositorio o contacta al mantenedor.
 
 ---
