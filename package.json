@@ -1,7 +1,7 @@
 {
   "name": "navegador",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Navegador multiplataforma basado en Electron y Vite.",
   "author": "IDellamea",
   "type": "module",

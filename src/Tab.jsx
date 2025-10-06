@@ -10,10 +10,15 @@ function Tab({ tab, onDelete, onUpdate }) {
   const [isUrlVisible, setUrlVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [labelValue, setLabelValue] = useState(tab.label);
+  const lastPersistedUrlRef = useRef(tab.url);
 
   useEffect(() => {
     setLabelValue(tab.label);
   }, [tab.label]);
+
+  useEffect(() => {
+    lastPersistedUrlRef.current = tab.url;
+  }, [tab.url]);
 
   useEffect(() => {
     const webview = webviewRef.current;
@@ -21,6 +26,30 @@ function Tab({ tab, onDelete, onUpdate }) {
       webview.setAttribute('useragent', MOBILE_USER_AGENT);
     }
   }, []);
+
+  useEffect(() => {
+    const webview = webviewRef.current;
+    if (!webview) return;
+
+    const handleNavigation = (event) => {
+      const navigatedUrl = event?.url?.trim();
+      if (!navigatedUrl) return;
+      if (lastPersistedUrlRef.current === navigatedUrl) return;
+
+      lastPersistedUrlRef.current = navigatedUrl;
+      onUpdate(tab.id, { url: navigatedUrl });
+    };
+
+    webview.addEventListener('did-navigate', handleNavigation);
+    webview.addEventListener('did-navigate-in-page', handleNavigation);
+    webview.addEventListener('did-redirect-navigation', handleNavigation);
+
+    return () => {
+      webview.removeEventListener('did-navigate', handleNavigation);
+      webview.removeEventListener('did-navigate-in-page', handleNavigation);
+      webview.removeEventListener('did-redirect-navigation', handleNavigation);
+    };
+  }, [tab.id, onUpdate]);
 
   const handleGoBack = () => {
     if (webviewRef.current) {

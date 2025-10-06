@@ -1,110 +1,188 @@
 # Navegador (React + Vite + Electron)
 
-Esta aplicación es un pequeño navegador basado en Electron que usa React y Vite para la interfaz. Cada "pestaña" carga una URL en un <webview> (Chromium embebido) por lo que la app puede abrir sitios y navegar directamente en Internet sin necesidad de un backend.
+Aplicación de escritorio construida con Electron que ofrece un conjunto de pestañas responsivas, persistiendo automáticamente la URL, el color y la etiqueta de cada pestaña. La interfaz se desarrolla con React + Vite y se incrusta en un contenedor Chromium mediante `<webview>`.
 
-Resumen rápido
-- Interfaz: React + Vite
-- Contenedor de escritorio: Electron (con webview)
-- Persistencia: las pestañas abiertas se guardan localmente en el directorio de usuario (ver abajo)
+## Tabla de contenidos
 
-Características principales
-- Crear y cerrar pestañas que cargan URLs reales.
-- Editar la etiqueta (nombre) de cada pestaña en la UI.
-- Elegir color de cabecera por pestaña.
-- Persistencia automática de la lista de pestañas en disco.
+1. [Descripción general](#descripción-general)
+2. [Requisitos previos](#requisitos-previos)
+3. [Instalación y preparación](#instalación-y-preparación)
+4. [Scripts habituales](#scripts-habituales)
+5. [Flujo de desarrollo](#flujo-de-desarrollo)
+6. [Persistencia local de pestañas](#persistencia-local-de-pestañas)
+7. [Construcción para producción](#construcción-para-producción)
+8. [Empaquetado con electron-builder](#empaquetado-con-electron-builder)
+9. [Versionado y publicación](#versionado-y-publicación)
+10. [Preguntas frecuentes](#preguntas-frecuentes)
+11. [Depuración y soporte](#depuración-y-soporte)
 
-¿Necesito backend?
-- No para navegar: las pestañas y el webview acceden directamente a Internet.
-- Sí necesitas backend si quieres centralizar datos, ocultar claves API, evitar CORS en peticiones fetch o procesar datos sensibles.
+## Descripción general
 
-Dónde se guardan las pestañas
-- En Windows la app guarda un archivo `tabs.json` en:
+- Interfaz web: React 18 + Vite.
+- Contenedor de escritorio: Electron con soporte para `webviewTag`.
+- Persistencia: el listado de pestañas se guarda como JSON en el directorio de datos de usuario de Electron.
+- Auto-actualizaciones: configurables mediante `electron-updater` y GitHub Releases (si se publica un release con los artefactos esperados).
 
-	%APPDATA%\Navegador\tabs.json
+## Requisitos previos
 
-	(equivalente a `app.getPath('userData')` en Electron). Puedes abrir ese archivo para ver/editar manualmente el estado guardado.
+- Node.js 18 LTS o superior.
+- npm 9+ (instalado junto con Node).
+- Git (opcional pero recomendado para clonar el repositorio).
+- Windows para generar instaladores NSIS mediante electron-builder (la configuración actual está orientada a Windows).
 
-Cómo ejecutar (PowerShell)
+Herramientas opcionales:
+- PowerShell 7+ para seguir los ejemplos exactos de comandos.
+- Cuenta de GitHub con un token personal (`GH_TOKEN`) si vas a automatizar el upload de artefactos.
 
-- Modo desarrollo (Vite + Electron, con HMR):
+## Instalación y preparación
 
-	$env:DEV_TUNNEL_HOST=''; npm run dev
+1. Clonar o descargar el repositorio.
+   ```powershell
+   git clone https://github.com/<usuario>/<repo>.git
+   cd Navegador
+   ```
+2. Instalar dependencias del proyecto.
+   ```powershell
+   npm install
+   ```
+3. (Opcional) Revisar [`package.json`](package.json) para confirmar nombre, versión y metadatos de publicación.
 
-	Esto arranca Vite y abre una ventana de Electron. Si quieres exponer Vite por un túnel (solo para desarrollo) exporta `DEV_TUNNEL_HOST` y `DEV_SERVER_URL` antes de `npm run dev`.
+## Scripts habituales
 
-- Solo servidor dev Vite (sin Electron):
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Arranca Vite en modo desarrollo y lanza Electron apuntando al dev-server (incluye HMR). |
+| `npm run build` | Genera los assets estáticos de producción en `dist/` mediante Vite. |
+| `npm run preview` | Sirve el build estático para pruebas rápidas (no lanza Electron). |
+| `npm run lint` | Ejecuta la configuración de ESLint definida en [`eslint.config.js`](eslint.config.js). |
+| `npm run dist` | Ejecuta electron-builder para empaquetar la aplicación y emitir instaladores/artefactos. |
 
-	npx vite --host 0.0.0.0 --port 5173
+> Nota: el script `npm run dist` requiere que `electron-builder` esté instalado como dependencia de desarrollo (ya viene declarado en [`package.json`](package.json)).
 
-	Esto sirve la UI en http://localhost:5173 (útil si usas un túnel para mostrar la UI a otra persona).
+## Flujo de desarrollo
 
-- Probar en modo producción local (usa los assets en `dist`):
+1. Definir, en caso necesario, el host público del túnel para Vite (solo si compartes la UI durante el desarrollo).
+   ```powershell
+   $env:DEV_TUNNEL_HOST = ''   # dejar vacío si no se usa túnel
+   $env:DEV_SERVER_URL = ''    # idem
+   ```
+2. Iniciar el entorno interactivo.
+   ```powershell
+   npm run dev
+   ```
+   - Se abrirá la ventana de Electron apuntando al dev-server y cargará la interfaz.
+   - Chromium DevTools se abre automáticamente en desarrollo.
+3. Ajustar código en [`src/`](src/) y dejar que Vite recargue la UI automáticamente.
+4. Al detener el dev-server (Ctrl+C) la ventana de Electron se cerrará.
 
-	npm run build
-	$env:NODE_ENV='production'; npx electron .
+## Persistencia local de pestañas
 
-	Esto abre la app apuntando a los archivos estáticos generados por Vite.
+- El estado de todas las pestañas se guarda como JSON en:
+  - Windows: `%APPDATA%\Navegador\tabs.json`
+  - macOS: `~/Library/Application Support/Navegador/tabs.json`
+  - Linux: `~/.config/Navegador/tabs.json`
+- [`main.cjs`](main.cjs) expone los manejadores IPC `read-tabs` y `write-tabs`, que el front-end invoca para cargar y guardar el arreglo.
+- Cada vez que se crea, elimina, re-etiqueta o cambia de URL una pestaña, [`App.jsx`](src/App.jsx) persiste la nueva lista automáticamente.
 
-Empaquetado / Instalador
+## Construcción para producción
 
-- Generar instalador con electron-builder (configurado en `package.json`):
+1. Generar los assets estáticos optimizados.
+   ```powershell
+   npm run build
+   ```
+2. Probar el build con Electron sin empaquetar.
+   ```powershell
+   $env:NODE_ENV = 'production'
+   npx electron .
+   ```
+   - El proceso carga `dist/index.html` dentro del contenedor Electron para validar que todo funciona igual que en desarrollo.
 
-	npm install --save-dev electron-builder
-	npm run dist
+## Empaquetado con electron-builder
 
-	- El proceso crea `dist/win-unpacked` y (si electron-builder lo permite) un instalador. Si el empaquetado automático de instaladores falla por permisos al extraer herramientas de firma, encontrarás una versión portable en `dist/Navegador-portable.zip` que puedes copiar/extraer en otra máquina y ejecutar `Navegador.exe`.
+1. Asegurarse de tener `electron-builder` instalado (ya figura como devDependency, pero ejecuta `npm install` si vienes de un clon limpio).
+2. Ejecutar el script de empaquetado.
+   ```powershell
+   npm run dist
+   ```
+3. Archivos de salida en `dist/`:
+   - `win-unpacked/`: versión portable (extraer y ejecutar `Navegador.exe`).
+   - `Navegador-Setup-<versión>.exe`: instalador NSIS por defecto.
+   - `Navegador-portable.zip`: ZIP portable generado por la configuración.
+   - `latest.yml`: manifiesto que usa `electron-updater` para resolver nuevas versiones.
+4. Si electron-builder necesita firmar binarios y no dispone de certificados, el proceso continuará pero los binarios quedarán sin firmar (apto para pruebas internas).
 
-- Nombre de artefacto y versiones: electron-builder puede incluir la versión en el nombre del instalador (usa `package.json.version`). Usa `npm version patch|minor|major` para versionar antes de `npm run dist`.
+## Versionado y publicación
 
-Distribución rápida (portable)
+### 1. Actualizar la versión
 
-- Ya se genera automáticamente un ZIP portable (`dist/Navegador-portable.zip`) con el contenido de `dist/win-unpacked`. Para probar en otra máquina extrae y ejecuta `Navegador.exe`.
+- Sigue el esquema SemVer usando los comandos nativos de npm:
+  ```powershell
+  npm version patch   # ó minor / major
+  ```
+  - Este comando actualiza `version` en [`package.json`](package.json) y crea automáticamente un tag Git (`vX.Y.Z`).
+  - Si trabajas en equipo, sube el commit y el tag:
+    ```powershell
+    git push origin main
+    git push origin vX.Y.Z
+    ```
 
-Notas de seguridad y recomendaciones
-- Actualmente `main.cjs` habilita `nodeIntegration: true` y `contextIsolation: false` para facilitar el desarrollo. Para producción te recomiendo desactivar `nodeIntegration` y activar `contextIsolation` y exponer funciones seguras mediante IPC.
-- Si integras actualizaciones automáticas, usa `electron-updater` y publica releases (por ejemplo en GitHub Releases) configurando `publish` en `package.json`.
-## Auto-actualizaciones con GitHub Releases
+### 2. Generar artefactos
 
-1. **Versionar antes de compilar**  
-   Ejecuta `npm version patch|minor|major` para actualizar [`package.json`](package.json:4-6) y crea un tag coincidente (ejemplo `v0.0.2`).
+- Una vez versionado, ejecuta:
+  ```powershell
+  npm run dist
+  ```
+- Verifica que `dist/` contiene:
+  - `Navegador-Setup-<versión>.exe`
+  - `latest.yml`
+  - `Navegador-portable.zip` (opcional, pero útil para distribución rápida)
+  - Cualquier otro archivo configurado en la sección `build.artifactName` de [`package.json`](package.json)
 
-2. **Generar artefactos de distribución**  
-   Ejecuta `npm run dist`. Conserva de la carpeta `dist/` al menos:  
-   - `Navegador-Setup-&lt;versión&gt;.exe` (instalador NSIS)  
-   - `latest.yml` (manifiesto que consulta `electron-updater`)  
-   También se mantiene la carpeta `win-unpacked` por si necesitas distribución portable.
+### 3. Publicar en GitHub Releases
 
-3. **Publicar el release en GitHub**  
-   - Asegúrate de que el repositorio sea público (requisito del `provider: "github"` definido en [`package.json`](package.json:43-62)).  
-  - Sube los artefactos anteriores al release asociado al tag.  
-  - Si prefieres automatizar el upload, define `GH_TOKEN` (PAT con permiso `repo`) antes de ejecutar `npm run dist`.
+1. Crear o reutilizar un repositorio público en GitHub.
+2. Definir `GH_TOKEN` en tu entorno si deseas que electron-builder suba los artefactos automáticamente:
+   ```powershell
+   $env:GH_TOKEN = 'ghp_XXXXXXXXXXXXXXXXXXXX'
+   npm run dist
+   ```
+3. Si prefieres subir manualmente:
+   - Crear un release asociado al tag `vX.Y.Z`.
+   - Adjuntar los archivos:
+     - `Navegador-Setup-<versión>.exe`
+     - `latest.yml`
+     - (Opcional) `Navegador-portable.zip`
+4. Publicar el release. Los clientes que tengan instalada la app se conectarán al feed GitHub y descargarán la actualización cuando detecten un `latest.yml` con versión superior.
 
-4. **Consumo por parte de los clientes**  
-   Los usuarios deben instalar la versión publicada mediante el setup NSIS. Al iniciarse, `autoUpdater.checkForUpdatesAndNotify()` definido en [`main.cjs`](main.cjs:40-67) descargará `latest.yml`, detectará una versión nueva y gestionará la descarga e instalación automática.
+### 4. Probar el flujo de actualización
 
-5. **Pruebas de flujo completo**  
-   - Instala la versión recién liberada.  
-   - Incrementa la versión local, reconstruye y sube un release nuevo con sus artefactos.  
-   - Abre la app instalada: deberá descargar la actualización y preguntar si quieres reiniciar para aplicarla.
+1. Instala la versión recién publicada mediante el instalador.
+2. Incrementa la versión local (por ejemplo `npm version patch`).
+3. Ejecuta `npm run dist` y publica un nuevo release con los artefactos.
+4. Abre la aplicación instalada: debería descargar la nueva versión y ofrecer reiniciar gracias a `autoUpdater.checkForUpdatesAndNotify()` configurado en [`main.cjs`](main.cjs).
 
-> Mantén todos los releases (especialmente `latest.yml`) disponibles públicamente; si los eliminas, los clientes no podrán resolver la URL de actualización definida por `electron-updater`.
+## Preguntas frecuentes
 
-Depuración
-- En desarrollo Electron abre DevTools automáticamente. En producción puedes forzar `win.webContents.openDevTools()` temporalmente para depurar.
+- **¿Necesito un backend?** No para navegar. Cada pestaña solicita directamente las URLs. Solo necesitas backend si quieres centralizar datos o manejar credenciales.
+- **¿Puedo compartir la interfaz sin compilar?** Sí. Ejecuta `npm run preview` para servir el build y expón el puerto mediante un túnel; tu interlocutor accederá vía navegador.
+- **¿Qué ocurre si borro `tabs.json`?** La app arrancará sin pestañas y generará el archivo de nuevo al guardar cambios.
 
-Preguntas frecuentes
-- "¿La app necesita un servidor?" — No, para navegar no. Solo si quieres backend para datos/servicios.
-- "¿Puedo compartir la UI con otra persona?" — Sí, pero normalmente solo en desarrollo (usa un túnel que exponga el puerto 5173). Si vas a distribuir la app usa el .exe o el ZIP portable.
+## Depuración y soporte
 
-Contacto y contribuciones
-- Este repo es un proyecto local; si quieres añadir features (autoupdate, firma de binarios, mejor seguridad) con gusto puedo ayudarte a integrarlos.
+- En desarrollo DevTools se abre automáticamente. Para producción puedes habilitar temporalmente `win.webContents.openDevTools()` en [`main.cjs`](main.cjs).
+- Los logs de auto-actualización se escriben mediante `electron-log` en el directorio de usuario (`%APPDATA%\Navegador\logs`).
+- Si encuentras fallos o necesitas nuevas funcionalidades, abre un issue en el repositorio o contacta al mantenedor.
 
 ---
-Pequeña guía rápida de comandos
 
-Dev:    npm run dev
-Vite:   npx vite --host 0.0.0.0 --port 5173
-Build:  npm run build
-Prod:   $env:NODE_ENV='production'; npx electron .
-Dist:   npm run dist
+### Resumen rápido de comandos
 
+| Uso | Comando |
+|-----|---------|
+| Desarrollo | `npm run dev` |
+| Build estático | `npm run build` |
+| Previsualización | `npm run preview` |
+| Producción local | `$env:NODE_ENV='production'; npx electron .` |
+| Empaquetado | `npm run dist` |
+
+Mantén este README actualizado cada vez que modifiques scripts, configuración de publicación o requisitos.
