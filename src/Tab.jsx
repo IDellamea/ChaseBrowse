@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Tab.css';
 
-const MOBILE_USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Mobile/15E148 Safari/604.1';
+const DESKTOP_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 function Tab({ tab, onDelete, onUpdate }) {
   const webviewRef = useRef(null);
@@ -23,7 +23,7 @@ function Tab({ tab, onDelete, onUpdate }) {
   useEffect(() => {
     const webview = webviewRef.current;
     if (webview) {
-      webview.setAttribute('useragent', MOBILE_USER_AGENT);
+      webview.setAttribute('useragent', DESKTOP_USER_AGENT);
     }
   }, []);
 
@@ -40,14 +40,25 @@ function Tab({ tab, onDelete, onUpdate }) {
       onUpdate(tab.id, { url: navigatedUrl });
     };
 
+    const handleFailLoad = (event) => {
+      if (event.errorCode === -3) {
+        // ERR_ABORTED, ignorar silenciosamente ya que es común en redirecciones
+        return;
+      } else {
+        console.error('Error al cargar página:', event.errorDescription, event.validatedURL);
+      }
+    };
+
     webview.addEventListener('did-navigate', handleNavigation);
     webview.addEventListener('did-navigate-in-page', handleNavigation);
     webview.addEventListener('did-redirect-navigation', handleNavigation);
+    webview.addEventListener('did-fail-load', handleFailLoad);
 
     return () => {
       webview.removeEventListener('did-navigate', handleNavigation);
       webview.removeEventListener('did-navigate-in-page', handleNavigation);
       webview.removeEventListener('did-redirect-navigation', handleNavigation);
+      webview.removeEventListener('did-fail-load', handleFailLoad);
     };
   }, [tab.id, onUpdate]);
 

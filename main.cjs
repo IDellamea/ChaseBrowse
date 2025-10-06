@@ -64,6 +64,12 @@ function createApplicationMenu() {
               });
               return;
             }
+            // Mostrar popup inicial
+            dialog.showMessageBox({
+              type: 'info',
+              title: 'Buscando actualizaciones',
+              message: 'Estamos buscando actualizaciones...',
+            });
             manualCheckInProgress = true;
             autoUpdater.checkForUpdates().catch((err) => {
               manualCheckInProgress = false;
@@ -81,10 +87,11 @@ function createApplicationMenu() {
         {
           label: 'Acerca de ChaseBrowse',
           click: () => {
+            const version = require('./package.json').version;
             dialog.showMessageBox({
               type: 'info',
               title: 'Acerca de ChaseBrowse',
-              message: 'ChaseBrowse v0.0.3',
+              message: `ChaseBrowse v${version}`,
               detail: 'Navegador multiplataforma desarrollado con Electron y React.\n\nCreado por IDellamea.',
             });
           },
@@ -101,6 +108,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
+    icon: path.join(__dirname, 'logo.ico'),
     webPreferences: {
       // Habilitar webviewTag es crucial para nuestra app
       webviewTag: true,
@@ -108,6 +116,9 @@ function createWindow() {
       contextIsolation: false,
     },
   });
+
+  // Maximizar la ventana al abrir
+  win.maximize();
 
   // En desarrollo, carga la URL del servidor de Vite.
   // En producción, carga el archivo HTML compilado.
@@ -142,11 +153,20 @@ app.whenReady().then(() => {
       autoUpdater.on('update-available', (info) => {
         log.info('autoUpdater: update available', info.version);
         if (manualCheckInProgress) {
-          dialog.showMessageBox({
-            type: 'info',
-            title: 'Actualizar',
-            message: `Se encontró una actualización (${info.version}). Se descargará en segundo plano.`,
+          const currentVersion = require('./package.json').version;
+          const choice = dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow(), {
+            type: 'question',
+            buttons: ['Actualizar ahora', 'Después'],
+            defaultId: 0,
+            cancelId: 1,
+            title: 'Actualización disponible',
+            message: `Versión actual: ${currentVersion}\nVersión nueva: ${info.version}\n\n¿Deseas descargar e instalar la actualización ahora?`,
           });
+          if (choice === 0) {
+            // Continuar con la descarga automática
+          } else {
+            manualCheckInProgress = false;
+          }
         }
       });
 
@@ -154,10 +174,11 @@ app.whenReady().then(() => {
         log.info('autoUpdater: no update available');
         if (manualCheckInProgress) {
           manualCheckInProgress = false;
+          const currentVersion = require('./package.json').version;
           dialog.showMessageBox({
             type: 'info',
-            title: 'Actualizar',
-            message: 'No hay nuevas versiones disponibles.',
+            title: 'Sin actualizaciones',
+            message: `Estás usando la versión más reciente (${currentVersion}).`,
           });
         }
       });

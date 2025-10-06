@@ -39,6 +39,7 @@
   },
   "build": {
     "appId": "com.dellamea.chasebrowse",
+    "icon": "logo.ico",
     "forceCodeSigning": false,
     "productName": "ChaseBrowse",
     "artifactName": "${productName}-Setup-${version}.${ext}",

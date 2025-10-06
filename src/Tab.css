@@ -78,6 +78,7 @@
   flex-grow: 1;
   border-radius: 0 0 8px 8px;
   overflow: hidden;
+  overflow-x: hidden;
 }
 
 .column-webview-container webview {
