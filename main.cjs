@@ -19,7 +19,31 @@ function createApplicationMenu() {
   const template = [
     ...(process.platform === 'darwin' ? [{ role: 'appMenu' }] : []),
     {
-      label: 'Help',
+      label: 'Archivo',
+      submenu: [
+        {
+          label: 'Nueva pestaña',
+          accelerator: 'CmdOrCtrl+T',
+          click: () => {
+            // Enviar mensaje al renderer para agregar pestaña
+            const focused = BrowserWindow.getFocusedWindow();
+            if (focused) {
+              focused.webContents.send('new-tab');
+            }
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Salir',
+          accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
+          click: () => {
+            app.quit();
+          },
+        },
+      ],
+    },
+    {
+      label: 'Ayuda',
       submenu: [
         {
           label: 'Buscar actualizaciones…',
@@ -50,6 +74,18 @@ function createApplicationMenu() {
                 message: 'No se pudo comprobar si hay actualizaciones.',
                 detail: err?.message ?? String(err),
               });
+            });
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Acerca de ChaseBrowse',
+          click: () => {
+            dialog.showMessageBox({
+              type: 'info',
+              title: 'Acerca de ChaseBrowse',
+              message: 'ChaseBrowse v0.0.3',
+              detail: 'Navegador multiplataforma desarrollado con Electron y React.\n\nCreado por IDellamea.',
             });
           },
         },

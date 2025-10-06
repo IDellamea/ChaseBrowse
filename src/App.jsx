@@ -10,6 +10,18 @@ function App() {
   // IPC renderer (disponible porque en main.cjs seteamos nodeIntegration: true)
   const { ipcRenderer } = window.require ? window.require('electron') : { ipcRenderer: null };
 
+  // Listener para mensajes del menú
+  useEffect(() => {
+    if (!ipcRenderer) return;
+    const handleNewTab = () => {
+      handleAddTab();
+    };
+    ipcRenderer.on('new-tab', handleNewTab);
+    return () => {
+      ipcRenderer.removeListener('new-tab', handleNewTab);
+    };
+  }, [urlInput]);
+
   // Cargar pestañas desde disco al montar
   useEffect(() => {
     let mounted = true;
@@ -114,9 +126,6 @@ function App() {
           </Resizable>
         ))}
       </div>
-      <footer className="app-footer">
-        Creado por <strong>IDellamea</strong>
-      </footer>
     </div>
   );
 }

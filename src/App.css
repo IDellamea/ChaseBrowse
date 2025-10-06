@@ -77,11 +77,3 @@ html, body, #root {
   padding: 10px;
   box-sizing: border-box;
 }
-.app-footer {
- padding: 10px 16px;
- text-align: center;
- background-color: #fff;
- border-top: 1px solid #ccc;
- font-size: 14px;
- color: #555;
-}

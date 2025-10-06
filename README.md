@@ -20,6 +20,7 @@ Aplicación de escritorio construida con Electron que ofrece un conjunto de pest
 
 - Interfaz web: React 18 + Vite.
 - Contenedor de escritorio: Electron con soporte para `webviewTag`.
+- Menú de aplicación: opciones estándar en español (Archivo, Editar, Ayuda) con atajos de teclado.
 - Persistencia: el listado de pestañas se guarda como JSON en el directorio de datos de usuario de Electron.
 - Auto-actualizaciones: configurables mediante `electron-updater` y GitHub Releases (si se publica un release con los artefactos esperados).
 
@@ -151,7 +152,7 @@ Herramientas opcionales:
    - Adjuntar los archivos:
      - `ChaseBrowse-Setup-<versión>.exe`
      - `latest.yml`
-     - (Opcional) `Navegador-portable.zip`
+     - (Opcional) `ChaseBrowse-portable.zip`
 4. Publicar el release. Los clientes que tengan instalada la app se conectarán al feed GitHub y descargarán la actualización cuando detecten un `latest.yml` con versión superior.
 
 ### 4. Probar el flujo de actualización
