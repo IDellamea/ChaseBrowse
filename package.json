@@ -1,7 +1,7 @@
 {
   "name": "chasebrowse",
   "private": true,
-  "version": "0.0.3",
+  "version": "0.0.3-alpha.1",
   "description": "Navegador multiplataforma basado en Electron y Vite con persistencia de pestañas.",
   "author": "IDellamea",
   "type": "module",
@@ -39,7 +39,7 @@
   },
   "build": {
     "appId": "com.dellamea.chasebrowse",
-    "icon": "public/logo.jpeg",
+    "icon": "build/icons/icon",
     "forceCodeSigning": false,
     "productName": "ChaseBrowse",
     "artifactName": "${productName}-Setup-${version}.${ext}",
