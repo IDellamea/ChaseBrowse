@@ -108,7 +108,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
-    icon: path.join(__dirname, 'public', 'logo.jpeg'),
+    icon: path.join(__dirname, 'public', 'logo.ico'),
     webPreferences: {
       // Habilitar webviewTag es crucial para nuestra app
       webviewTag: true,

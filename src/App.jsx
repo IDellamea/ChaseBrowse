@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react';
 import { Resizable } from 're-resizable';
 import './App.css';
 import Tab from './Tab';
+import logoOscuro from './assets/logoanimado-oscuro.webp';
+import logoClaro from './assets/logoanimado-claro.webp';
 
 function App() {
   const [urlInput, setUrlInput] = useState('https://www.facebook.com');
   const [tabs, setTabs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   // IPC renderer (disponible porque en main.cjs seteamos nodeIntegration: true)
   const { ipcRenderer } = window.require ? window.require('electron') : { ipcRenderer: null };
@@ -34,6 +38,11 @@ function App() {
         }
       } catch (err) {
         console.error('Error al cargar pestañas:', err);
+      } finally {
+        // Esperar al menos 2 segundos para mostrar el spinner completo
+        setTimeout(() => {
+          if (mounted) setIsLoading(false);
+        }, 2000);
       }
     }
     loadTabs();
@@ -94,6 +103,14 @@ function App() {
     );
     setTabs(updatedTabs);
   };
+
+  if (isLoading) {
+    return (
+      <div className="loading-container" style={{ backgroundColor: isDarkMode ? '#000' : '#fff' }}>
+        <div className="spinner" style={{ backgroundImage: `url(${isDarkMode ? logoOscuro : logoClaro})` }}></div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
