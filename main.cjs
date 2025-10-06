@@ -108,7 +108,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
-    icon: path.join(__dirname, 'logo.ico'),
+    icon: path.join(__dirname, 'public', 'logo.jpeg'),
     webPreferences: {
       // Habilitar webviewTag es crucial para nuestra app
       webviewTag: true,
@@ -142,6 +142,7 @@ app.whenReady().then(() => {
   if (process.env.NODE_ENV !== 'development' && autoUpdater) {
     try {
       // Configuración básica: comprobar actualizaciones y notificar
+      autoUpdater.allowPrerelease = true; // Permite versiones beta/alpha
       autoUpdater.checkForUpdatesAndNotify().catch(err => {
         console.error('autoUpdater check failed', err);
       });

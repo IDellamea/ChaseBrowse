@@ -22,7 +22,7 @@ Aplicación de escritorio construida con Electron que ofrece un conjunto de pest
 - Contenedor de escritorio: Electron con soporte para `webviewTag`.
 - Menú de aplicación: opciones estándar en español (Archivo, Editar, Ayuda) con atajos de teclado.
 - Persistencia: el listado de pestañas se guarda como JSON en el directorio de datos de usuario de Electron.
-- Auto-actualizaciones: configurables mediante `electron-updater` y GitHub Releases (si se publica un release con los artefactos esperados).
+- Auto-actualizaciones: configurables mediante `electron-updater` y GitHub Releases (soporta versiones prerelease como beta/alpha).
 
 ## Requisitos previos
 
