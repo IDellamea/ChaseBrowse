@@ -1,7 +1,7 @@
 {
   "name": "chasebrowse",
   "private": true,
-  "version": "0.0.3-alpha.2",
+  "version": "0.0.3-alpha.3",
   "description": "Navegador multiplataforma basado en Electron y Vite con persistencia de pestañas.",
   "author": "IDellamea",
   "type": "module",
