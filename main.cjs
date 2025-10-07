@@ -15,6 +15,83 @@ try {
   autoUpdater = null;
 }
 
+function openDownloadsHistoryWindow() {
+  const historyWin = new BrowserWindow({
+    width: 600,
+    height: 400,
+    title: 'Historial de Descargas',
+    autoHideMenuBar: true,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+  });
+
+  // Leer historial directamente
+  try {
+    const userPath = app.getPath('userData');
+    const file = path.join(userPath, 'downloads_history.json');
+    let history = [];
+    if (fs.existsSync(file)) {
+      const content = fs.readFileSync(file, 'utf8');
+      history = JSON.parse(content);
+    }
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Historial de Descargas</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+          h2 { color: #333; margin-bottom: 20px; text-align: center; }
+          ul { list-style: none; padding: 0; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+          li { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+          li:last-child { border-bottom: none; }
+          .info { flex: 1; }
+          .label { font-weight: bold; font-size: 1.1em; color: #007bff; margin-bottom: 5px; }
+          .url { color: #666; font-size: 0.9em; margin-bottom: 3px; word-break: break-all; }
+          .path { color: #999; font-size: 0.8em; margin-bottom: 3px; }
+          .timestamp { color: #999; font-size: 0.8em; }
+          .empty { text-align: center; color: #999; padding: 40px; font-style: italic; }
+          button { background-color: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+          button:hover { background-color: #0056b3; }
+        </style>
+      </head>
+      <body>
+        <h2>Historial de Páginas Guardadas</h2>
+        ${history.length === 0 ? '<p class="empty">No hay descargas aún.</p>' : `
+        <ul>
+          ${history.map((item, index) => `
+            <li>
+              <div class="info">
+                <div class="label">${item.label || 'Sin etiqueta'}</div>
+                <div class="url">${item.url}</div>
+                <div class="path">Guardado en: ${item.path}</div>
+                <div class="timestamp">${new Date(item.timestamp).toLocaleString()}</div>
+              </div>
+              <button onclick="openFolder('${item.path.replace(/\\/g, '\\\\')}')">Abrir carpeta</button>
+            </li>
+          `).join('')}
+        </ul>
+        `}
+        <script>
+          const { shell } = require('electron');
+          function openFolder(filePath) {
+            const dir = require('path').dirname(filePath);
+            shell.openPath(dir);
+          }
+        </script>
+      </body>
+      </html>
+    `;
+    historyWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  } catch (err) {
+    console.error('Error cargando historial:', err);
+    historyWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent('<h2>Error cargando historial</h2>')}`);
+  }
+}
+
 function createApplicationMenu() {
   const template = [
     ...(process.platform === 'darwin' ? [{ role: 'appMenu' }] : []),
@@ -30,6 +107,13 @@ function createApplicationMenu() {
             if (focused) {
               focused.webContents.send('new-tab');
             }
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Historial de descargas',
+          click: () => {
+            openDownloadsHistoryWindow();
           },
         },
         { type: 'separator' },
@@ -260,8 +344,34 @@ ipcMain.handle('write-tabs', async (event, tabs) => {
   }
 });
 
+// Handlers para historial de descargas
+ipcMain.handle('read-downloads-history', async () => {
+  try {
+    const userPath = app.getPath('userData');
+    const file = path.join(userPath, 'downloads_history.json');
+    if (!fs.existsSync(file)) return [];
+    const content = fs.readFileSync(file, 'utf8');
+    return JSON.parse(content);
+  } catch (err) {
+    console.error('Error leyendo downloads_history.json', err);
+    return [];
+  }
+});
+
+ipcMain.handle('write-downloads-history', async (event, history) => {
+  try {
+    const userPath = app.getPath('userData');
+    const file = path.join(userPath, 'downloads_history.json');
+    fs.writeFileSync(file, JSON.stringify(history, null, 2), 'utf8');
+    return { ok: true };
+  } catch (err) {
+    console.error('Error escribiendo downloads_history.json', err);
+    return { ok: false, error: err.message };
+  }
+});
+
 // Handler para guardar página usando single-file-cli
-ipcMain.handle('save-page', async (event, url) => {
+ipcMain.handle('save-page', async (event, { url, label }) => {
   const { exec } = require('child_process');
 
   // Mostrar diálogo para elegir ubicación y nombre del archivo
@@ -284,8 +394,8 @@ ipcMain.handle('save-page', async (event, url) => {
 
   const command = `single-file "${url}" --output-directory "${outputDir}" --filename-template "${filename}"`;
 
-  return new Promise((resolve) => {
-    exec(command, (error, stdout, stderr) => {
+  return new Promise(async (resolve) => {
+    exec(command, async (error, stdout, stderr) => {
       if (error) {
         console.error('Error ejecutando single-file-cli:', error);
         dialog.showMessageBox(BrowserWindow.getFocusedWindow(), {
@@ -297,6 +407,30 @@ ipcMain.handle('save-page', async (event, url) => {
         resolve({ success: false, error: error.message });
       } else {
         console.log('Página guardada exitosamente:', fullPath);
+
+        // Añadir al historial
+        try {
+          const userPath = app.getPath('userData');
+          const histFile = path.join(userPath, 'downloads_history.json');
+          let history = [];
+          if (fs.existsSync(histFile)) {
+            const content = fs.readFileSync(histFile, 'utf8');
+            history = JSON.parse(content);
+          }
+          history.unshift({
+            url,
+            label,
+            path: fullPath,
+            timestamp: new Date().toISOString(),
+            filename: path.basename(fullPath)
+          });
+          // Mantener solo las últimas 50 entradas
+          if (history.length > 50) history.splice(50);
+          fs.writeFileSync(histFile, JSON.stringify(history, null, 2), 'utf8');
+        } catch (histErr) {
+          console.error('Error guardando en historial:', histErr);
+        }
+
         dialog.showMessageBox(BrowserWindow.getFocusedWindow(), {
           type: 'info',
           title: 'Página guardada',

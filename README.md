@@ -92,6 +92,7 @@ Herramientas opcionales:
 - Se abrirá un diálogo para elegir la ubicación y nombre del archivo (por defecto, en la carpeta Descargas con un nombre basado en timestamp).
 - La funcionalidad usa IPC entre el frontend React y el backend Electron para ejecutar el comando CLI de forma segura.
 - Compatible con páginas simples y complejas; maneja errores de red mostrando mensajes informativos.
+- Historial de descargas: accede desde el menú "Archivo > Historial de descargas" para ver una lista de páginas guardadas previamente, con URLs, rutas y fechas.
 
 ## Construcción para producción
 

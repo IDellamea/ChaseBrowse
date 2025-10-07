@@ -128,7 +128,7 @@ function Tab({ tab, onDelete, onUpdate }) {
   const handleSavePage = async () => {
     setIsSaving(true);
     try {
-      const result = await ipcRenderer.invoke('save-page', tab.url);
+      const result = await ipcRenderer.invoke('save-page', { url: tab.url, label: tab.label });
       // Feedback adicional opcional, ya que main.cjs maneja dialog
       if (result.success) {
         console.log('Página guardada en:', result.path);
