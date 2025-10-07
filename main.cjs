@@ -392,8 +392,8 @@ ipcMain.handle('save-page', async (event, { url, label }) => {
   const outputDir = path.dirname(fullPath);
   const filename = path.basename(fullPath);
 
-  const singleFilePath = path.join(__dirname, 'node_modules', '.bin', process.platform === 'win32' ? 'single-file.cmd' : 'single-file');
-  const command = `"${singleFilePath}" "${url}" --output-directory "${outputDir}" --filename-template "${filename}"`;
+  const singleFileScript = path.join(__dirname, 'node_modules', 'single-file-cli', 'single-file-node.js');
+  const command = `node "${singleFileScript}" "${url}" "${fullPath}"`;
 
   return new Promise(async (resolve) => {
     exec(command, async (error, stdout, stderr) => {
