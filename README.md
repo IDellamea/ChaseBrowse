@@ -85,6 +85,14 @@ Herramientas opcionales:
 - [`main.cjs`](main.cjs) expone los manejadores IPC `read-tabs` y `write-tabs`, que el front-end invoca para cargar y guardar el arreglo.
 - Cada vez que se crea, elimina, re-etiqueta o cambia de URL una pestaña, [`App.jsx`](src/App.jsx) persiste la nueva lista automáticamente.
 
+## Guardar páginas como archivos HTML
+
+- ChaseBrowse integra `single-file-cli` para guardar la página web actual de cualquier pestaña como un archivo HTML único, incluyendo todos los recursos embebidos (imágenes, CSS, JS).
+- Para guardar una página: haz clic en el botón 💾 en el header de la pestaña deseada.
+- Se abrirá un diálogo para elegir la ubicación y nombre del archivo (por defecto, en la carpeta Descargas con un nombre basado en timestamp).
+- La funcionalidad usa IPC entre el frontend React y el backend Electron para ejecutar el comando CLI de forma segura.
+- Compatible con páginas simples y complejas; maneja errores de red mostrando mensajes informativos.
+
 ## Construcción para producción
 
 1. Generar los assets estáticos optimizados.

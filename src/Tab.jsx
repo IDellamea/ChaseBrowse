@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Tab.css';
 
+// IPC renderer para comunicación con main process
+const { ipcRenderer } = window.require('electron');
+
 const DESKTOP_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 function Tab({ tab, onDelete, onUpdate }) {
@@ -116,9 +119,27 @@ function Tab({ tab, onDelete, onUpdate }) {
   };
 
   const [showPalette, setShowPalette] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleColorChange = (e) => {
     onUpdate(tab.id, { color: e.target.value });
+  };
+
+  const handleSavePage = async () => {
+    setIsSaving(true);
+    try {
+      const result = await ipcRenderer.invoke('save-page', tab.url);
+      // Feedback adicional opcional, ya que main.cjs maneja dialog
+      if (result.success) {
+        console.log('Página guardada en:', result.path);
+      } else {
+        console.error('Error guardando página:', result.error);
+      }
+    } catch (err) {
+      console.error('Error en IPC save-page:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Función para determinar el color de texto según el fondo
@@ -171,6 +192,9 @@ function Tab({ tab, onDelete, onUpdate }) {
           </>
         )}
   <button onClick={handleColorButtonClick} className="header-btn">🎨</button>
+        <button onClick={handleSavePage} className="header-btn" disabled={isSaving}>
+          {isSaving ? '⏳' : '💾'}
+        </button>
         <button onClick={onDelete} className="close-btn">X</button>
       </div>
       {showPalette && (

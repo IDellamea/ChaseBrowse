@@ -19,7 +19,8 @@
     "electron-updater": "^6.6.2",
     "re-resizable": "^6.11.2",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "single-file-cli": "^2.0.75"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

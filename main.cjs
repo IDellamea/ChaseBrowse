@@ -260,6 +260,55 @@ ipcMain.handle('write-tabs', async (event, tabs) => {
   }
 });
 
+// Handler para guardar página usando single-file-cli
+ipcMain.handle('save-page', async (event, url) => {
+  const { exec } = require('child_process');
+
+  // Mostrar diálogo para elegir ubicación y nombre del archivo
+  const result = await dialog.showSaveDialog(BrowserWindow.getFocusedWindow(), {
+    title: 'Guardar página como',
+    defaultPath: `pagina_guardada_${Date.now()}.html`,
+    filters: [
+      { name: 'Archivos HTML', extensions: ['html'] },
+      { name: 'Todos los archivos', extensions: ['*'] }
+    ]
+  });
+
+  if (result.canceled) {
+    return { success: false, error: 'Operación cancelada por el usuario' };
+  }
+
+  const fullPath = result.filePath;
+  const outputDir = path.dirname(fullPath);
+  const filename = path.basename(fullPath);
+
+  const command = `single-file "${url}" --output-directory "${outputDir}" --filename-template "${filename}"`;
+
+  return new Promise((resolve) => {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Error ejecutando single-file-cli:', error);
+        dialog.showMessageBox(BrowserWindow.getFocusedWindow(), {
+          type: 'error',
+          title: 'Error al guardar página',
+          message: 'No se pudo guardar la página.',
+          detail: error.message,
+        });
+        resolve({ success: false, error: error.message });
+      } else {
+        console.log('Página guardada exitosamente:', fullPath);
+        dialog.showMessageBox(BrowserWindow.getFocusedWindow(), {
+          type: 'info',
+          title: 'Página guardada',
+          message: 'La página se ha guardado exitosamente.',
+          detail: `Archivo guardado en: ${fullPath}`,
+        });
+        resolve({ success: true, path: fullPath });
+      }
+    });
+  });
+});
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
